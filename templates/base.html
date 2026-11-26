@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Instagram{% endblock %}</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, "Pretendard", "Malgun Gothic", sans-serif; background: #fafafa; color: #262626; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid #dbdbdb; }
+    nav a { color: #262626; text-decoration: none; margin-left: 16px; }
+    .logo { font-weight: 700; font-size: 20px; margin-left: 0; }
+    main { max-width: 600px; margin: 24px auto; padding: 0 16px; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav>
+    <a class="logo" href="/">Instagram</a>
+    <div>
+      {% if me %}
+        <a href="/feed">홈</a>
+        <a href="/upload">업로드</a>
+        <a href="/profile/{{ me }}">프로필</a>
+        <a href="/logout">로그아웃</a>
+      {% else %}
+        <a href="/login">로그인</a>
+        <a href="/signup">회원가입</a>
+      {% endif %}
+    </div>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
