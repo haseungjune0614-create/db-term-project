@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}가입하기 • Instagram{% endblock %}
+{% block head %}
+<style>
+  .auth-wrap { width: 100%; max-width: 350px; }
+  .auth-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 34px 40px 28px;
+    text-align: center;
+  }
+  .brand-title {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 0 0 10px;
+  }
+  .brand-sub {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0 0 22px;
+  }
+  .field { margin-bottom: 8px; }
+  .field input {
+    width: 100%;
+    padding: 11px 10px;
+    background: var(--surface);
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--muted); }
+  .btn-submit {
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-submit:hover { opacity: 0.9; }
+  .error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .switch-card {
+    margin-top: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .switch-card a { color: var(--link-blue); font-weight: 600; }
+</style>
+{% endblock %}
+{% block auth_content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="brand-title">Instagram</h1>
+    <p class="brand-sub">친구들의 사진과 동영상을 보려면 가입하세요.</p>
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/signup">
+      <div class="field">
+        <input type="text" name="user_id" placeholder="사용자 이름 (영문/숫자/_)" maxlength="30" required>
+      </div>
+      <div class="field">
+        <input type="text" name="display_name" placeholder="성명 (표시 이름)" maxlength="50" required>
+      </div>
+      <div class="field">
+        <input type="password" name="password" placeholder="비밀번호" required>
+      </div>
+      <button class="btn-submit" type="submit">가입</button>
+    </form>
+  </div>
+
+  <div class="switch-card">
+    계정이 있으신가요? <a href="/login">로그인</a>
+  </div>
+</div>
+{% endblock %}

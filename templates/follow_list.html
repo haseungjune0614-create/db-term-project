@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ target.display_name }}님의 {{ title }} • Instagram{% endblock %}
+{% block head %}
+<style>
+  .list-wrap {
+    max-width: 440px;
+    margin: 48px auto;
+    padding: 0 16px;
+  }
+  .list-card {
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .list-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .close-link {
+    font-size: 13px;
+    color: var(--link-blue);
+    font-weight: 600;
+  }
+  .user-list {
+    padding: 8px 16px;
+  }
+  .user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+  }
+  .user-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .uid {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .uname {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .view-btn {
+    padding: 6px 14px;
+    background: var(--btn-secondary);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .view-btn:hover { background: var(--btn-secondary-hover); }
+  .empty {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="list-wrap">
+  <div class="list-card">
+    <div class="list-header">
+      <h2>{{ target.display_name }}님의 {{ title }}</h2>
+      <a class="close-link" href="/profile/{{ target.user_id }}">돌아가기</a>
+    </div>
+
+    {% if users %}
+    <div class="user-list">
+      {% for u in users %}
+      <div class="user-item">
+        <a class="user-left" href="/profile/{{ u.user_id }}">
+          <span class="ig-avatar" style="width: 44px; height: 44px;"></span>
+          <span>
+            <span class="uid">{{ u.display_name }}</span>
+            <span class="uname">@{{ u.user_id }}</span>
+          </span>
+        </a>
+        <a class="view-btn" href="/profile/{{ u.user_id }}">프로필</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty">{{ title }} 목록이 비어 있습니다.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

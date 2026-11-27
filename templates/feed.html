@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% block title %}Instagram{% endblock %}
+{% block head %}
+<style>
+  .feed-layout {
+    display: flex;
+    justify-content: center;
+    gap: 64px;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 22px 20px 60px;
+  }
+  .feed-center {
+    width: 100%;
+    max-width: 630px;
+  }
+
+  /* 상단 스토리 트레이 */
+  .stories-bar {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 4px 4px 26px;
+    scrollbar-width: none;
+  }
+  .stories-bar::-webkit-scrollbar { display: none; }
+  .story-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 78px;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  .story-ring-lg {
+    padding: 3px;
+  }
+  .story-ring-lg .story-ring-inner {
+    padding: 3px;
+  }
+  .story-name {
+    font-size: 12px;
+    color: var(--text);
+    max-width: 76px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 피드 게시물 스트림 */
+  .posts-stream {
+    max-width: 470px;
+    margin: 0 auto;
+  }
+  .post-card {
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 2px 12px;
+  }
+  .post-author-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .post-author-id {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .post-dot-time {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .post-more {
+    color: var(--text);
+    padding: 4px;
+    display: inline-flex;
+  }
+
+  /* 게시물 미디어 */
+  .post-media {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--media-bg);
+  }
+  .post-media img {
+    width: 100%;
+    max-height: 585px;
+    object-fit: contain;
+    display: block;
+    background: var(--media-bg);
+  }
+  .img-fallback {
+    display: none;
+    height: 360px;
+    background: var(--fallback-bg);
+    color: var(--muted);
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  /* 액션 아이콘 바 (하트 · 댓글 · 공유 · 북마크) */
+  .post-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 8px;
+  }
+  .actions-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .action-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .action-btn:hover { opacity: 0.72; }
+  .action-btn svg { width: 24px; height: 24px; }
+
+  .likes-text {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .caption-row {
+    font-size: 14px;
+    line-height: 1.45;
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+  .caption-author {
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .view-comments {
+    display: inline-block;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .quick-comment {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .quick-comment input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+    padding: 4px 0;
+  }
+  .quick-comment input::placeholder { color: var(--faint); }
+  .quick-comment button {
+    background: none;
+    border: none;
+    color: var(--link-blue);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .empty-feed {
+    text-align: center;
+    padding: 64px 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--muted);
+  }
+
+  /* 우측 추천 사이드바 */
+  .feed-right {
+    width: 319px;
+    flex-shrink: 0;
+    padding-top: 14px;
+  }
+  .me-row, .suggest-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+  .user-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .user-texts {
+    min-width: 0;
+  }
+  .user-id-text {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .user-sub-text {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .side-link-blue {
+    background: none;
+    border: none;
+    color: var(--link-blue);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .side-link-blue:hover { color: #a3b6ff; }
+  .suggest-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 18px 0 8px;
+  }
+  .suggest-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .suggest-all {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .ig-footer {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--faint);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 1160px) {
+    .feed-right { display: none; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="feed-layout">
+  <div class="feed-center">
+    {% if story_users %}
+    <div class="stories-bar">
+      {% for u in story_users %}
+      <a class="story-item" href="/profile/{{ u.user_id }}">
+        <span class="story-ring story-ring-lg">
+          <span class="story-ring-inner">
+            <span class="ig-avatar" style="width: 66px; height: 66px;"></span>
+          </span>
+        </span>
+        <span class="story-name">{{ u.display_name }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="posts-stream">
+      {% if posts %}
+        {% for post in posts %}
+        <article class="post-card" id="post-{{ post.post_id }}">
+          <div class="post-header">
+            <div class="post-author-wrap">
+              <a href="/profile/{{ post.author_id }}" style="display:inline-flex;">
+                <span class="story-ring">
+                  <span class="story-ring-inner" style="padding: 2px;">
+                    <span class="ig-avatar" style="width: 32px; height: 32px;"></span>
+                  </span>
+                </span>
+              </a>
+              <a class="post-author-id" href="/profile/{{ post.author_id }}">{{ post.display_name }}</a>
+              <span class="post-dot-time">• {{ post.time_ago }}</span>
+            </div>
+            <a class="post-more" href="/posts/{{ post.post_id }}" title="상세 보기">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="6" cy="12" r="1.6"></circle>
+                <circle cx="12" cy="12" r="1.6"></circle>
+                <circle cx="18" cy="12" r="1.6"></circle>
+              </svg>
+            </a>
+          </div>
+
+          <a href="/posts/{{ post.post_id }}" style="display:block;">
+            <div class="post-media">
+              <img src="{{ post.image_path }}" alt="post"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="img-fallback">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <path d="M21 15l-5-5L5 21"></path>
+                </svg>
+                <span>샘플 이미지 없음 ({{ post.image_path }})</span>
+              </div>
+            </div>
+          </a>
+
+          <div class="post-actions">
+            <div class="actions-left">
+              <form method="post" action="/posts/{{ post.post_id }}/like" style="margin:0; display:inline-flex;">
+                <input type="hidden" name="next" value="/feed#post-{{ post.post_id }}">
+                <button class="action-btn" type="submit" title="좋아요">
+                  {% if post.liked_by_me %}
+                  <svg viewBox="0 0 24 24" fill="#ff3040">
+                    <path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938Z"/>
+                  </svg>
+                  {% else %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                    <path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938Z"/>
+                  </svg>
+                  {% endif %}
+                  {% if post.like_count > 0 %}<span>{{ post.like_count }}</span>{% endif %}
+                </button>
+              </form>
+
+              <a class="action-btn" href="/posts/{{ post.post_id }}" title="댓글">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" stroke-linejoin="round"/>
+                </svg>
+                {% if post.comment_count > 0 %}<span>{{ post.comment_count }}</span>{% endif %}
+              </a>
+
+              <a class="action-btn" href="/posts/{{ post.post_id }}" title="게시물 이동">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <line x1="22" y1="3" x2="9.218" y2="10.083"></line>
+                  <polygon points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke-linejoin="round"></polygon>
+                </svg>
+              </a>
+            </div>
+
+            <a class="action-btn" href="/posts/{{ post.post_id }}" title="저장">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <polygon points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke-linejoin="round"></polygon>
+              </svg>
+            </a>
+          </div>
+
+          {% if post.like_count > 0 %}
+            <div class="likes-text">좋아요 {{ post.like_count }}개</div>
+          {% endif %}
+
+          {% if post.caption %}
+            <div class="caption-row">
+              <a class="caption-author" href="/profile/{{ post.author_id }}">{{ post.display_name }}</a>{{ post.caption }}
+            </div>
+          {% endif %}
+
+          {% if post.comment_count > 0 %}
+            <a class="view-comments" href="/posts/{{ post.post_id }}">댓글 {{ post.comment_count }}개 모두 보기</a>
+          {% else %}
+            <a class="view-comments" href="/posts/{{ post.post_id }}">댓글 달기</a>
+          {% endif %}
+
+          <form class="quick-comment" method="post" action="/posts/{{ post.post_id }}/comments">
+            <input type="hidden" name="next" value="/feed#post-{{ post.post_id }}">
+            <input type="text" name="content" maxlength="1000" placeholder="댓글 달기... (@아이디 멘션 가능)" required>
+            <button type="submit">게시</button>
+          </form>
+        </article>
+        {% endfor %}
+      {% else %}
+        <div class="empty-feed">
+          <p style="font-size:16px; color:var(--text); font-weight:600; margin:0 0 8px;">피드가 비어 있습니다</p>
+          <p style="font-size:14px; margin:0;">상단 스토리나 우측 추천에서 다른 사용자를 팔로우하거나 첫 게시물을 올려보세요.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <aside class="feed-right">
+    {% if my_user %}
+    <div class="me-row">
+      <a class="user-meta" href="/profile/{{ me }}">
+        <span class="ig-avatar" style="width: 44px; height: 44px;"></span>
+        <span class="user-texts">
+          <span class="user-id-text">{{ my_user.display_name }}</span>
+          <span class="user-sub-text">@{{ my_user.user_id }}</span>
+        </span>
+      </a>
+      <a class="side-link-blue" href="/logout">전환</a>
+    </div>
+    {% endif %}
+
+    <div class="suggest-header">
+      <span class="suggest-title">회원님을 위한 추천</span>
+      <a class="suggest-all" href="/profile/{{ me }}/following">모두 보기</a>
+    </div>
+
+    {% if suggested_users %}
+      {% for u in suggested_users %}
+      <div class="suggest-row">
+        <a class="user-meta" href="/profile/{{ u.user_id }}">
+          <span class="ig-avatar" style="width: 44px; height: 44px;"></span>
+          <span class="user-texts">
+            <span class="user-id-text">{{ u.display_name }}</span>
+            <span class="user-sub-text">회원님을 위한 추천</span>
+          </span>
+        </a>
+        <form method="post" action="/profile/{{ u.user_id }}/follow" style="margin:0;">
+          <input type="hidden" name="next" value="/feed">
+          <button class="side-link-blue" type="submit">팔로우</button>
+        </form>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="font-size:13px; color:var(--faint); padding:8px 0;">모든 사용자를 팔로우 중입니다.</div>
+    {% endif %}
+
+    <div class="ig-footer">
+      <div>소개 · 도움말 · 홍보 센터 · API · 채용 정보 · 개인정보처리방침 · 약관 · 위치 · 언어</div>
+      <div style="margin-top: 14px;">© 2026 INSTAGRAM FROM META</div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}{% if partner %}{{ partner.display_name }} • {% endif %}메시지 • Instagram{% endblock %}
+{% block head %}
+<style>
+  .dm-shell {
+    display: flex;
+    height: 100vh;
+    background: var(--bg);
+  }
+
+  /* 좌측 대화 목록 패널 */
+  .dm-list-pane {
+    width: 340px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .dm-list-header {
+    padding: 24px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dm-my-uid {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .dm-sub-title {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .dm-scroll-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .dm-section-heading {
+    padding: 12px 20px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .dm-thread-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    transition: background 0.12s ease;
+  }
+  .dm-thread-item:hover { background: var(--hover-bg); }
+  .dm-thread-item.active { background: var(--hover-bg); }
+  .dm-thread-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .dm-thread-name {
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .dm-thread-time {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .dm-thread-preview {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .dm-empty-side {
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* 우측 채팅 패널 */
+  .dm-chat-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--bg);
+  }
+  .dm-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dm-chat-partner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .dm-chat-partner-name {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .dm-chat-partner-uid {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .dm-profile-btn {
+    padding: 7px 14px;
+    background: var(--btn-secondary);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .dm-profile-btn:hover { background: var(--btn-secondary-hover); }
+
+  .dm-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dm-row {
+    display: flex;
+    flex-direction: column;
+    max-width: 68%;
+  }
+  .dm-row.mine {
+    align-self: flex-end;
+    align-items: flex-end;
+  }
+  .dm-row.theirs {
+    align-self: flex-start;
+    align-items: flex-start;
+  }
+  .dm-bubble {
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    line-height: 1.45;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .dm-row.mine .dm-bubble {
+    background: var(--accent);
+    color: #ffffff;
+    border-bottom-right-radius: 6px;
+  }
+  .dm-row.theirs .dm-bubble {
+    background: var(--btn-secondary);
+    color: var(--text);
+    border-bottom-left-radius: 6px;
+  }
+  .dm-time {
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+  .dm-no-msg {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* 입력 폼 */
+  .dm-input-wrap {
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .dm-input-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--input-border);
+    border-radius: 24px;
+    padding: 6px 14px 6px 18px;
+    background: var(--surface);
+  }
+  .dm-input-form input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    padding: 7px 0;
+    outline: none;
+  }
+  .dm-input-form input::placeholder { color: var(--muted); }
+  .dm-send-btn {
+    border: none;
+    background: transparent;
+    color: var(--link-blue);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 6px 8px;
+  }
+  .dm-send-btn:hover { opacity: 0.8; }
+
+  /* 대화 미선택 상태 */
+  .dm-placeholder {
+    margin: auto;
+    text-align: center;
+    padding: 24px;
+    max-width: 340px;
+  }
+  .dm-placeholder-icon {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: 2px solid var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .dm-placeholder h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .dm-placeholder p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 767px) {
+    .dm-shell { height: calc(100vh - 56px); flex-direction: column; }
+    .dm-list-pane {
+      width: 100%;
+      max-height: 36%;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="dm-shell">
+  <section class="dm-list-pane">
+    <div class="dm-list-header">
+      <div class="dm-my-uid">{{ my_user.display_name if my_user else me }}</div>
+      <div class="dm-sub-title">메시지</div>
+    </div>
+
+    <div class="dm-scroll-list">
+      <div class="dm-section-heading">대화 목록</div>
+      {% if partners %}
+        {% for p in partners %}
+        <a class="dm-thread-item {% if partner and partner.user_id == p.partner_id %}active{% endif %}"
+           href="/messages/{{ p.partner_id }}">
+          <span class="ig-avatar" style="width: 48px; height: 48px;"></span>
+          <div class="dm-thread-meta">
+            <div class="dm-thread-name">
+              <span>{{ p.display_name }}</span>
+              <span class="dm-thread-time">{{ p.time_ago }}</span>
+            </div>
+            <div class="dm-thread-preview">
+              {% if p.last_sender == me %}나: {% endif %}{{ p.last_content }}
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      {% else %}
+        <div class="dm-empty-side">아직 나눈 대화가 없습니다.</div>
+      {% endif %}
+
+      {% if new_users %}
+      <div class="dm-section-heading" style="margin-top: 10px;">새 대화 시작</div>
+      {% for u in new_users %}
+      <a class="dm-thread-item {% if partner and partner.user_id == u.user_id %}active{% endif %}"
+         href="/messages/{{ u.user_id }}">
+        <span class="ig-avatar" style="width: 42px; height: 42px;"></span>
+        <div class="dm-thread-meta">
+          <div class="dm-thread-name"><span>{{ u.display_name }}</span></div>
+          <div class="dm-thread-preview">@{{ u.user_id }}</div>
+        </div>
+      </a>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="dm-chat-pane">
+    {% if partner %}
+      <header class="dm-chat-header">
+        <a class="dm-chat-partner" href="/profile/{{ partner.user_id }}">
+          <span class="ig-avatar" style="width: 40px; height: 40px;"></span>
+          <div>
+            <div class="dm-chat-partner-name">{{ partner.display_name }}</div>
+            <div class="dm-chat-partner-uid">@{{ partner.user_id }}</div>
+          </div>
+        </a>
+        <a class="dm-profile-btn" href="/profile/{{ partner.user_id }}">프로필 보기</a>
+      </header>
+
+      <div class="dm-messages-area" id="chatScroll">
+        {% if chat_messages %}
+          {% for m in chat_messages %}
+          <div class="dm-row {% if m.sender_id == me %}mine{% else %}theirs{% endif %}">
+            <div class="dm-bubble">{{ m.content }}</div>
+            <div class="dm-time">{{ m.time_label }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="dm-no-msg">
+            <strong>{{ partner.display_name }}</strong>님에게 첫 메시지를 보내보세요.
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="dm-input-wrap">
+        <form class="dm-input-form" method="post" action="/messages/{{ partner.user_id }}">
+          <input name="content" type="text" placeholder="메시지 입력..." maxlength="1000" required autocomplete="off" autofocus>
+          <button class="dm-send-btn" type="submit">보내기</button>
+        </form>
+      </div>
+    {% else %}
+      <div class="dm-placeholder">
+        <div class="dm-placeholder-icon">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+            <line x1="22" y1="3" x2="9.218" y2="10.083"></line>
+            <polygon points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"></polygon>
+          </svg>
+        </div>
+        <h2>내 메시지</h2>
+        <p>왼쪽 목록에서 대화할 사용자를 선택해 1:1 메시지를 주고받아 보세요.</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+  const chatScroll = document.getElementById("chatScroll");
+  if (chatScroll) {
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+</script>
+{% endblock %}
