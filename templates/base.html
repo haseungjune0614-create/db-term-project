@@ -4,32 +4,401 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Instagram{% endblock %}</title>
+  <script>
+    if (localStorage.getItem("ig_theme") === "light") {
+      document.documentElement.classList.add("light-mode");
+    }
+  </script>
   <style>
-    body { margin: 0; font-family: -apple-system, "Pretendard", "Malgun Gothic", sans-serif; background: #fafafa; color: #262626; }
-    nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid #dbdbdb; }
-    nav a { color: #262626; text-decoration: none; margin-left: 16px; }
-    .logo { font-weight: 700; font-size: 20px; margin-left: 0; }
-    main { max-width: 600px; margin: 24px auto; padding: 0 16px; }
+    :root {
+      --bg: #0c1014;
+      --surface: #12161c;
+      --elevated: #1b2028;
+      --border: #26292e;
+      --input-border: #363636;
+      --text: #f5f5f5;
+      --muted: #a8a8a8;
+      --faint: #737373;
+      --accent: #4a5df9;
+      --link-blue: #708dff;
+      --danger: #ff3040;
+      --hover-bg: rgba(255, 255, 255, 0.08);
+      --btn-secondary: #25292f;
+      --btn-secondary-hover: #31363e;
+      --media-bg: #000000;
+      --fallback-bg: #14181f;
+      --sidebar-shadow: 10px 0 32px rgba(0, 0, 0, 0.5);
+      --nav-collapsed: 72px;
+      --nav-expanded: 244px;
+    }
+    html.light-mode {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --elevated: #ffffff;
+      --border: #dbdbdb;
+      --input-border: #dbdbdb;
+      --text: #0c1014;
+      --muted: #737373;
+      --faint: #8e8e8e;
+      --accent: #4a5df9;
+      --link-blue: #3143e3;
+      --danger: #ed4956;
+      --hover-bg: rgba(0, 0, 0, 0.05);
+      --btn-secondary: #efefef;
+      --btn-secondary-hover: #dbdbdb;
+      --media-bg: #f5f5f5;
+      --fallback-bg: #f0f2f5;
+      --sidebar-shadow: 10px 0 32px rgba(0, 0, 0, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* 공통 인스타 기본 실루엣 아바타 */
+    .ig-avatar {
+      border-radius: 50%;
+      background-color: #c7ccd1;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='24' r='12' fill='%23ffffff'/%3E%3Cpath d='M10 58c0-12.5 9.8-21 22-21s22 8.5 22 21' fill='%23ffffff'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+
+    /* 인스타 스토리 그라데이션 링 */
+    .story-ring {
+      border-radius: 50%;
+      padding: 2.5px;
+      background: linear-gradient(45deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .story-ring-inner {
+      border-radius: 50%;
+      padding: 2.5px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease;
+    }
+
+    /* 좌측 고정 사이드바: 기본 72px(아이콘만) → hover 시 244px 오버레이 확장 */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: var(--nav-collapsed);
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--bg);
+      border-right: 1px solid transparent;
+      z-index: 200;
+      overflow: hidden;
+      transition: width 0.22s cubic-bezier(.17, .17, 0, 1),
+                  background-color 0.2s ease,
+                  border-color 0.2s ease,
+                  box-shadow 0.22s ease;
+    }
+    .sidebar:hover {
+      width: var(--nav-expanded);
+      border-right-color: var(--border);
+      box-shadow: var(--sidebar-shadow);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 48px;
+      padding: 0 12px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .sidebar-logo:hover { background: var(--hover-bg); }
+    .sidebar-logo svg { width: 24px; height: 24px; flex-shrink: 0; }
+    .logo-wordmark {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 48px;
+      width: 100%;
+      padding: 0 12px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      white-space: nowrap;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease;
+    }
+    .nav-item:hover { background: var(--hover-bg); }
+    .nav-item svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+    /* 텍스트 라벨 슬라이드 애니메이션 */
+    .nav-label {
+      opacity: 0;
+      transform: translateX(-16px);
+      pointer-events: none;
+      transition: opacity 0.18s cubic-bezier(.17, .17, 0, 1),
+                  transform 0.22s cubic-bezier(.17, .17, 0, 1);
+    }
+    .sidebar:hover .nav-label {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    /* '새로 만들기' 구분 라벨 (높이 고정으로 아이콘 상하 흔들림 방지) */
+    .nav-section-label {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px 0;
+      font-size: 14px;
+      color: var(--muted);
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-16px);
+      pointer-events: none;
+      transition: opacity 0.18s cubic-bezier(.17, .17, 0, 1),
+                  transform 0.22s cubic-bezier(.17, .17, 0, 1);
+    }
+    .sidebar:hover .nav-section-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .sidebar-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* 다크/화이트 아이콘 전환 */
+    .icon-sun { display: inline-block; }
+    .icon-moon { display: none; }
+    html.light-mode .icon-sun { display: none; }
+    html.light-mode .icon-moon { display: inline-block; }
+    .label-to-light { display: inline; }
+    .label-to-dark { display: none; }
+    html.light-mode .label-to-light { display: none; }
+    html.light-mode .label-to-dark { display: inline; }
+
+    /* 비로그인 화면 우측 상단 테마 토글 */
+    .auth-theme-btn {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--btn-secondary);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .auth-theme-btn:hover { background: var(--btn-secondary-hover); }
+
+    /* 본문은 항상 72px 여백만 유지해 hover 시 화면이 밀리지 않음 */
+    .app-main {
+      margin-left: var(--nav-collapsed);
+      min-height: 100vh;
+    }
+    .auth-main {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .mention {
+      color: var(--link-blue);
+      font-weight: 500;
+    }
+    .mention:hover { text-decoration: underline; }
+
+    @media (max-width: 767px) {
+      .sidebar, .sidebar:hover {
+        position: sticky;
+        width: 100%;
+        height: 56px;
+        bottom: auto;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 16px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        box-shadow: none;
+      }
+      .sidebar-top-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .sidebar-logo { margin-bottom: 0; padding: 0 8px; }
+      .nav-list { flex-direction: row; align-items: center; gap: 4px; }
+      .nav-section-label, .nav-label { display: none; }
+      .nav-item { width: auto; }
+      .sidebar-bottom { flex-direction: row; gap: 4px; }
+      .app-main { margin-left: 0; }
+    }
   </style>
   {% block head %}{% endblock %}
 </head>
 <body>
-  <nav>
-    <a class="logo" href="/">Instagram</a>
-    <div>
-      {% if me %}
-        <a href="/feed">홈</a>
-        <a href="/upload">업로드</a>
-        <a href="/profile/{{ me }}">프로필</a>
-        <a href="/logout">로그아웃</a>
-      {% else %}
-        <a href="/login">로그인</a>
-        <a href="/signup">회원가입</a>
-      {% endif %}
+  {% if me %}
+  <aside class="sidebar">
+    <div class="sidebar-top-group">
+      <a class="sidebar-logo" href="/feed" title="Instagram">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2.982c2.937 0 3.285.011 4.445.064a6.087 6.087 0 0 1 2.042.379 3.408 3.408 0 0 1 1.265.823 3.408 3.408 0 0 1 .823 1.265 6.087 6.087 0 0 1 .379 2.042c.053 1.16.064 1.508.064 4.445s-.011 3.285-.064 4.445a6.087 6.087 0 0 1-.379 2.042 3.643 3.643 0 0 1-2.088 2.088 6.087 6.087 0 0 1-2.042.379c-1.16.053-1.508.064-4.445.064s-3.285-.011-4.445-.064a6.087 6.087 0 0 1-2.043-.379 3.408 3.408 0 0 1-1.264-.823 3.408 3.408 0 0 1-.823-1.265 6.087 6.087 0 0 1-.379-2.042c-.053-1.16-.064-1.508-.064-4.445s.011-3.285.064-4.445a6.087 6.087 0 0 1 .379-2.042 3.408 3.408 0 0 1 .823-1.265 3.408 3.408 0 0 1 1.265-.823 6.087 6.087 0 0 1 2.042-.379c1.16-.053 1.508-.064 4.445-.064M12 1c-2.987 0-3.362.013-4.535.066a8.074 8.074 0 0 0-2.67.511 5.392 5.392 0 0 0-1.949 1.27 5.392 5.392 0 0 0-1.269 1.948 8.074 8.074 0 0 0-.51 2.67C1.012 8.638 1 9.013 1 12s.013 3.362.066 4.535a8.074 8.074 0 0 0 .511 2.67 5.392 5.392 0 0 0 1.27 1.949 5.392 5.392 0 0 0 1.948 1.269 8.074 8.074 0 0 0 2.67.51C8.638 22.988 9.013 23 12 23s3.362-.013 4.535-.066a8.074 8.074 0 0 0 2.67-.511 5.625 5.625 0 0 0 3.218-3.218 8.074 8.074 0 0 0 .51-2.67C22.988 15.362 23 14.987 23 12s-.013-3.362-.066-4.535a8.074 8.074 0 0 0-.511-2.67 5.392 5.392 0 0 0-1.27-1.949 5.392 5.392 0 0 0-1.948-1.269 8.074 8.074 0 0 0-2.67-.51C15.362 1.012 14.987 1 12 1Zm0 5.351A5.649 5.649 0 1 0 17.649 12 5.649 5.649 0 0 0 12 6.351Zm0 9.316A3.667 3.667 0 1 1 15.667 12 3.667 3.667 0 0 1 12 15.667Zm5.872-10.859a1.32 1.32 0 1 0 1.32 1.32 1.32 1.32 0 0 0-1.32-1.32Z"></path>
+        </svg>
+        <span class="nav-label logo-wordmark">Instagram</span>
+      </a>
+
+      <nav class="nav-list">
+        <a class="nav-item" href="/feed">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="m21.762 8.786-7-6.68a3.994 3.994 0 0 0-5.524 0l-7 6.681A4.017 4.017 0 0 0 1 11.68V19c0 2.206 1.794 4 4 4h3.005a1 1 0 0 0 1-1v-7.003a2.997 2.997 0 0 1 5.994 0V22a1 1 0 0 0 1 1H19c2.206 0 4-1.794 4-4v-7.32a4.02 4.02 0 0 0-1.238-2.894Z"></path>
+          </svg>
+          <span class="nav-label" style="font-weight: 700;">홈</span>
+        </a>
+
+        <a class="nav-item" href="/messages">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <line x1="22" y1="3" x2="9.218" y2="10.083"></line>
+            <polygon points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"></polygon>
+          </svg>
+          <span class="nav-label">메시지</span>
+        </a>
+
+        <a class="nav-item" href="/profile/{{ me }}">
+          <span class="ig-avatar" style="width: 24px; height: 24px;"></span>
+          <span class="nav-label">프로필</span>
+        </a>
+
+        <div class="nav-section-label">새로 만들기</div>
+
+        <a class="nav-item" href="/upload">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.583 12.408a1.277 1.277 0 0 1 1.29 0l3.42 1.975c.404.233.645.65.645 1.117 0 .466-.241.884-.645 1.117l-3.42 1.975a1.286 1.286 0 0 1-1.29 0 1.278 1.278 0 0 1-.645-1.118v-3.949c0-.466.241-.884.645-1.117ZM5.226 3.977a1.25 1.25 0 1 1-.004 2.501 1.25 1.25 0 0 1 .004-2.501Z"></path>
+            <path fill-rule="evenodd" d="M8.5.5c2.08 0 2.344.008 3.185.046.962.044 1.546.217 1.963.379.58.224 1.035.52 1.471.956.438.437.733.89.957 1.47.142.364.29.857.356 1.619l.022.343c.03.684.038.987.041 2.19 1.205.004 1.507.012 2.19.043.962.044 1.547.217 1.963.379.58.224 1.035.52 1.471.956.438.437.733.89.957 1.47.142.364.29.857.356 1.619l.022.343c.038.842.046 1.107.046 3.187s-.008 2.344-.046 3.186c-.044.962-.217 1.546-.379 1.963a4.06 4.06 0 0 1-.955 1.47v-.002a4.07 4.07 0 0 1-1.47.96l-.002-.002c-.416.162-1 .335-1.962.38-.841.037-1.106.045-3.186.045s-2.344-.008-3.185-.046c-.963-.044-1.547-.217-1.964-.379a4.045 4.045 0 0 1-1.47-.956 4.052 4.052 0 0 1-.957-1.47c-.161-.418-.334-1.001-.378-1.963-.03-.683-.039-.986-.042-2.19a41.353 41.353 0 0 1-2.19-.042c-.962-.044-1.546-.217-1.963-.379a4.045 4.045 0 0 1-1.47-.956 4.052 4.052 0 0 1-.957-1.47c-.161-.417-.334-1.001-.378-1.962C.508 10.845.5 10.58.5 8.5s.008-2.344.046-3.186C.59 4.352.763 3.767.925 3.35a4.061 4.061 0 0 1 .956-1.47A4.062 4.062 0 0 1 3.35.925c.417-.162 1-.334 1.963-.378C6.155.508 6.42.5 8.5.5Zm7 9c-2.071 0-2.3.007-3.096.043l.001.001c-.733.034-1.104.157-1.33.245-.32.124-.54.266-.78.506a2.07 2.07 0 0 0-.506.778c-.088.227-.211.598-.245 1.332-.036.796-.044 1.025-.044 3.095 0 2.07.008 2.3.044 3.095.025.55.1.896.174 1.13l.071.2v.003c.093.24.197.422.344.6l.162.177.002.001c.237.238.455.38.775.505h.002c.227.088.597.211 1.331.245.797.036 1.024.044 3.095.044 2.07 0 2.3-.008 3.095-.044l.259-.017c.565-.047.874-.151 1.072-.228h.002c.32-.124.538-.266.777-.506.24-.239.382-.459.506-.78.088-.226.211-.596.245-1.33.036-.796.044-1.025.044-3.095 0-2.07-.008-2.3-.044-3.095l-.017-.258c-.047-.566-.151-.875-.228-1.073v-.002a2.057 2.057 0 0 0-.506-.777l-.002-.001a2.054 2.054 0 0 0-.775-.505h-.002c-.227-.088-.597-.211-1.331-.245-.796-.036-1.025-.044-3.095-.044Zm-9.815 1.518a.526.526 0 0 0-.744 0l-2.08 2.08c.076.16.162.296.272.43l.162.177.002.001c.237.238.455.38.775.505h.002c.227.088.597.211 1.331.245.646.03.917.036 2.099.04.003-1.047.008-1.41.031-1.94a1.497 1.497 0 0 1-.709-.397l-1.141-1.141ZM8.5 2.5c-2.071 0-2.3.007-3.096.043l.001.001c-.734.034-1.104.157-1.33.245-.32.124-.54.266-.78.506a2.07 2.07 0 0 0-.506.778c-.088.227-.211.598-.245 1.332C2.508 6.201 2.5 6.43 2.5 8.5c0 1.447.004 1.995.019 2.465L3.704 9.78a2.276 2.276 0 0 1 3.218 0l.89.89c.038-.117.075-.223.113-.32a4.062 4.062 0 0 1 .956-1.47 4.062 4.062 0 0 1 1.469-.956c.417-.162 1-.334 1.963-.378.682-.03.986-.039 2.182-.042a39.444 39.444 0 0 0-.039-2.099l-.016-.259c-.048-.565-.152-.874-.23-1.072v-.002a2.057 2.057 0 0 0-.505-.777l-.002-.001a2.053 2.053 0 0 0-.775-.505h-.002c-.227-.088-.597-.211-1.331-.245C10.799 2.508 10.57 2.5 8.5 2.5Z"></path>
+          </svg>
+          <span class="nav-label">게시물</span>
+        </a>
+      </nav>
     </div>
-  </nav>
-  <main>
+
+    <div class="sidebar-bottom">
+      <button class="nav-item" type="button" onclick="toggleTheme()" title="모드 전환">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.5"></circle>
+          <line x1="12" y1="2" x2="12" y2="4.5"></line>
+          <line x1="12" y1="19.5" x2="12" y2="22"></line>
+          <line x1="4.22" y1="4.22" x2="6" y2="6"></line>
+          <line x1="18" y1="18" x2="19.78" y2="19.78"></line>
+          <line x1="2" y1="12" x2="4.5" y2="12"></line>
+          <line x1="19.5" y1="12" x2="22" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="6" y2="18"></line>
+          <line x1="18" y1="6" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <span class="nav-label">
+          <span class="label-to-light">화이트 모드</span>
+          <span class="label-to-dark">다크 모드</span>
+        </span>
+      </button>
+
+      <a class="nav-item" href="/password">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+        <span class="nav-label">비밀번호 변경</span>
+      </a>
+
+      <a class="nav-item" href="/logout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+          <line x1="3" y1="4" x2="21" y2="4"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="20" x2="21" y2="20"></line>
+        </svg>
+        <span class="nav-label">로그아웃</span>
+      </a>
+    </div>
+  </aside>
+
+  <main class="app-main">
     {% block content %}{% endblock %}
   </main>
+  {% else %}
+  <button class="auth-theme-btn" type="button" onclick="toggleTheme()">
+    <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4.5"></circle>
+      <line x1="12" y1="2" x2="12" y2="4.5"></line>
+      <line x1="12" y1="19.5" x2="12" y2="22"></line>
+      <line x1="4.22" y1="4.22" x2="6" y2="6"></line>
+      <line x1="18" y1="18" x2="19.78" y2="19.78"></line>
+      <line x1="2" y1="12" x2="4.5" y2="12"></line>
+      <line x1="19.5" y1="12" x2="22" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="6" y2="18"></line>
+      <line x1="18" y1="6" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <span class="label-to-light">화이트 모드</span>
+    <span class="label-to-dark">다크 모드</span>
+  </button>
+
+  <main class="auth-main">
+    {% block auth_content %}{% endblock %}
+  </main>
+  {% endif %}
+
+  <script>
+    function toggleTheme() {
+      const isLight = document.documentElement.classList.toggle("light-mode");
+      localStorage.setItem("ig_theme", isLight ? "light" : "dark");
+    }
+  </script>
 </body>
 </html>

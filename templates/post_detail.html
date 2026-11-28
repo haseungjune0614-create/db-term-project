@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% block title %}{{ post.display_name }}님의 게시물 • Instagram{% endblock %}
+{% block head %}
+<style>
+  .detail-wrap {
+    max-width: 935px;
+    margin: 32px auto;
+    padding: 0 20px;
+  }
+  .detail-box {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) 360px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    min-height: 540px;
+    overflow: hidden;
+  }
+  .media-col {
+    background: var(--media-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border);
+  }
+  .media-col img {
+    width: 100%;
+    max-height: 680px;
+    object-fit: contain;
+    display: block;
+  }
+  .img-fallback {
+    display: none;
+    height: 360px;
+    width: 100%;
+    color: var(--muted);
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .info-col {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .author-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .comments-scroll {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 430px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .comment-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 14px;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .comment-author {
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .comment-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .empty-comments {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    margin: auto 0;
+  }
+
+  .info-actions {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .actions-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .icon-btn svg { width: 24px; height: 24px; }
+  .likes-count { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .full-date { font-size: 11px; color: var(--muted); }
+
+  .comment-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .comment-form input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .comment-form input::placeholder { color: var(--faint); }
+  .comment-form button {
+    background: none;
+    border: none;
+    color: var(--link-blue);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 820px) {
+    .detail-box { grid-template-columns: 1fr; }
+    .media-col { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="detail-wrap">
+  <div class="detail-box">
+    <div class="media-col">
+      <img src="{{ post.image_path }}" alt="post"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback">
+        <span>샘플 이미지 없음 ({{ post.image_path }})</span>
+      </div>
+    </div>
+
+    <div class="info-col">
+      <div class="info-header">
+        <a class="author-meta" href="/profile/{{ post.author_id }}">
+          <span class="story-ring">
+            <span class="story-ring-inner" style="padding:2px;">
+              <span class="ig-avatar" style="width: 32px; height: 32px;"></span>
+            </span>
+          </span>
+          <span>{{ post.display_name }}</span>
+        </a>
+        <span style="font-size:13px; color:var(--muted);">{{ post.time_ago }}</span>
+      </div>
+
+      <div class="comments-scroll">
+        {% if post.caption %}
+        <div class="comment-row">
+          <a href="/profile/{{ post.author_id }}">
+            <span class="ig-avatar" style="width: 32px; height: 32px;"></span>
+          </a>
+          <div>
+            <a class="comment-author" href="/profile/{{ post.author_id }}">{{ post.display_name }}</a>{{ post.caption }}
+            <div class="comment-sub">{{ post.time_ago }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if comments %}
+          {% for c in comments %}
+          <div class="comment-row">
+            <a href="/profile/{{ c.author_id }}">
+              <span class="ig-avatar" style="width: 32px; height: 32px;"></span>
+            </a>
+            <div>
+              <a class="comment-author" href="/profile/{{ c.author_id }}">{{ c.display_name }}</a><span>{{ c.formatted_content }}</span>
+              <div class="comment-sub">{{ c.time_ago }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        {% elif not post.caption %}
+          <div class="empty-comments">아직 댓글이 없습니다.<br>첫 댓글을 남겨보세요.</div>
+        {% endif %}
+      </div>
+
+      <div class="info-actions">
+        <div class="actions-row">
+          <div class="actions-left">
+            <form method="post" action="/posts/{{ post.post_id }}/like" style="margin:0; display:inline-flex;">
+              <input type="hidden" name="next" value="/posts/{{ post.post_id }}">
+              <button class="icon-btn" type="submit">
+                {% if post.liked_by_me %}
+                <svg viewBox="0 0 24 24" fill="#ff3040">
+                  <path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938Z"/>
+                </svg>
+                {% else %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 0 1 3.679-1.938Z"/>
+                </svg>
+                {% endif %}
+              </button>
+            </form>
+
+            <label class="icon-btn" for="comment-input" style="cursor:pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" stroke-linejoin="round"/>
+              </svg>
+            </label>
+          </div>
+        </div>
+
+        <div class="likes-count">좋아요 {{ post.like_count }}개</div>
+        <div class="full-date">{{ post.created_at }}</div>
+      </div>
+
+      <form class="comment-form" method="post" action="/posts/{{ post.post_id }}/comments">
+        <input id="comment-input" type="text" name="content" maxlength="1000" placeholder="댓글 달기... (@아이디 로 멘션 가능)" required>
+        <button type="submit">게시</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

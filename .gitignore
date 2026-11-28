@@ -5,6 +5,11 @@ __pycache__/
 *.pyc
 static/uploads/*
 !static/uploads/.gitkeep
+!static/uploads/alice*.jpg
+!static/uploads/bob*.jpg
+!static/uploads/chris*.jpg
+!static/uploads/dana*.jpg
+!static/uploads/eric*.jpg
 .vscode/
 .idea/
 .DS_Store
